@@ -30,11 +30,11 @@ appender reference in the root level section below.
 
   <appender name="SYSTEMLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>INFO</level>
+      <level>TRACE</level>
     </filter>
-    <file>${cassandra.logdir}/system.log</file>
+     <file>${cassandra.logdir}/system.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-      <fileNamePattern>${cassandra.logdir}/system.log.%i.zip</fileNamePattern>
+      <fileNamePattern>/var/log/system.log.%i.zip</fileNamePattern>
       <minIndex>1</minIndex>
       <maxIndex>20</maxIndex>
     </rollingPolicy>
@@ -87,7 +87,7 @@ appender reference in the root level section below.
   <appender name="LogbackMetrics" class="com.codahale.metrics.logback.InstrumentedAppender" />
    -->
 
-  <root level="INFO">
+  <root level="TRACE">
     <appender-ref ref="SYSTEMLOG" />
     <appender-ref ref="STDOUT" />
     <appender-ref ref="ASYNCDEBUGLOG" /> <!-- Comment this line to disable debug.log -->

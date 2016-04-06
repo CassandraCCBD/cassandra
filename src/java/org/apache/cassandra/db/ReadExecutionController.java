@@ -20,6 +20,8 @@ package org.apache.cassandra.db;
 import org.apache.cassandra.index.Index;
 import org.apache.cassandra.utils.concurrent.OpOrder;
 
+import org.apache.cassandra.modeling.ReadStageMapping;
+
 public class ReadExecutionController implements AutoCloseable
 {
     // For every reads
@@ -29,13 +31,31 @@ public class ReadExecutionController implements AutoCloseable
     private final OpOrder.Group indexOp;
     private final OpOrder.Group writeOp;
 
+    // To keep track of id of the controller
+    private final int id;
+
+    //corresponding getter functions
+    public int getId()
+    {
+    	return id;
+    }
+
     private ReadExecutionController(OpOrder.Group baseOp, OpOrder.Group indexOp, OpOrder.Group writeOp)
     {
         this.baseOp = baseOp;
         this.indexOp = indexOp;
         this.writeOp = writeOp;
+	// java sucks
+	this.id=-1;
     }
-
+    //Cassandra Team mod
+    private ReadExecutionController(OpOrder.Group baseOp, OpOrder.Group indexOp, OpOrder.Group writeOp, int id)
+    {
+        this.baseOp = baseOp;
+        this.indexOp = indexOp;
+        this.writeOp = writeOp;
+	this.id = id;
+    }
     public OpOrder.Group baseReadOpOrderGroup()
     {
         return baseOp;
@@ -66,7 +86,11 @@ public class ReadExecutionController implements AutoCloseable
     {
         ColumnFamilyStore baseCfs = Keyspace.openAndGetStore(command.metadata());
         ColumnFamilyStore indexCfs = maybeGetIndexCfs(baseCfs, command);
-
+	int tempid;
+	/* Cassandra Team Mod
+	 * We initialize the id here. Does not get initialized anywhere else 
+	 * Readstage always initializes from here
+	 */
         if (indexCfs == null)
         {
             return new ReadExecutionController(baseCfs.readOrdering.start(), null, null);
@@ -77,12 +101,13 @@ public class ReadExecutionController implements AutoCloseable
             // OpOrder.start() shouldn't fail, but better safe than sorry.
             try
             {
+	    	tempid = ReadStageMapping.getAndIncrementId();
                 baseOp = baseCfs.readOrdering.start();
                 indexOp = indexCfs.readOrdering.start();
                 // TODO: this should perhaps not open and maintain a writeOp for the full duration, but instead only *try* to delete stale entries, without blocking if there's no room
                 // as it stands, we open a writeOp and keep it open for the duration to ensure that should this CF get flushed to make room we don't block the reclamation of any room being made
                 writeOp = Keyspace.writeOrder.start();
-                return new ReadExecutionController(baseOp, indexOp, writeOp);
+                return new ReadExecutionController(baseOp, indexOp, writeOp, tempid);
             }
             catch (RuntimeException e)
             {

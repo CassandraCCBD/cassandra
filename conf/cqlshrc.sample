@@ -71,7 +71,7 @@
 [connection]
 
 ;; The host to connect to
-hostname = 127.0.0.1
+hostname = 10.10.3.136 
 
 ;; The port to connect to (9042 is the native protocol default)
 port = 9042

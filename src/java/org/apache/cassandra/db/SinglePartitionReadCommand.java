@@ -20,6 +20,7 @@ package org.apache.cassandra.db;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.io.*;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -339,7 +340,11 @@ public class SinglePartitionReadCommand extends ReadCommand
     {
         assert !cfs.isIndex(); // CASSANDRA-5732
         assert cfs.isRowCacheEnabled() : String.format("Row cache is not enabled on table [%s]", cfs.name);
-
+	/* Cassandra Team modification 
+	 * We try to profile this particlar function and check if this is the cause of all the grief 
+	 * in the readstage
+	 */
+	long startTime = System.nanoTime();
         RowCacheKey key = new RowCacheKey(metadata().ksAndCFName, partitionKey());
 
         // Attempt a sentinel-read-cache sequence.  if a write invalidates our sentinel, we'll return our
@@ -363,6 +368,19 @@ public class SinglePartitionReadCommand extends ReadCommand
                 Tracing.trace("Row cache hit");
                 UnfilteredRowIterator unfilteredRowIterator = clusteringIndexFilter().getUnfilteredRowIterator(columnFilter(), cachedPartition);
                 cfs.metric.updateSSTableIterated(0);
+		long endTime = System.nanoTime();
+		/* We dump this output to the row_hit file */
+		try
+		{
+		    PrintWriter  writer=new PrintWriter(new BufferedWriter(new FileWriter("/root/cache_hit",true)));
+		    writer.println(endTime - startTime);
+		    writer.close();
+		}
+		catch(Exception e)
+		{
+			logger.debug("Lolmax, write to cache profiling failed");
+		}
+
                 return unfilteredRowIterator;
             }
 
@@ -433,6 +451,17 @@ public class SinglePartitionReadCommand extends ReadCommand
         }
 
         Tracing.trace("Fetching data but not populating cache as query does not query from the start of the partition");
+	long endTime = System.nanoTime();
+	try
+	{
+	    PrintWriter  writer=new PrintWriter(new BufferedWriter(new FileWriter("/root/cache_miss",true)));
+	    writer.println(endTime - startTime);
+	    writer.close();
+	}
+	catch(Exception e)
+	{
+		logger.debug("Lolmax, write to cache profiling failed");
+	}
         return queryMemtableAndDisk(cfs, executionController);
     }
 

@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import java.io.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -493,6 +493,7 @@ public abstract class Message
 
             final Response response;
             final ServerConnection connection;
+	    long start_t=System.nanoTime();
 
             try
             {
@@ -505,7 +506,21 @@ public abstract class Message
 
                 logger.trace("Received: {}, v={}", request, connection.getVersion());
                 response = request.execute(qstate);
-                response.setStreamId(request.getStreamId());
+                try{
+		PrintWriter writer=new PrintWriter(new BufferedWriter(new FileWriter("/root/native_start_time",true)));
+		writer.println(start_t);
+		writer.close();
+
+		writer=new PrintWriter(new BufferedWriter(new FileWriter("/root/native_response_time",true)));
+		writer.println(System.nanoTime()-start_t);
+		writer.close();
+		}catch(Exception e){}
+		
+		
+		
+		
+		
+		response.setStreamId(request.getStreamId());
                 response.setWarnings(ClientWarn.instance.getWarnings());
                 response.attach(connection);
                 connection.applyStateTransition(request.type, response.type);

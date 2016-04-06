@@ -78,6 +78,7 @@ import org.apache.cassandra.utils.TopKSampler.SamplerResult;
 import org.apache.cassandra.utils.concurrent.OpOrder;
 import org.apache.cassandra.utils.concurrent.Refs;
 import org.apache.cassandra.utils.memory.MemtableAllocator;
+import org.apache.cassandra.tracing.Tracing;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -1827,7 +1828,10 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean
     public CachedPartition getRawCachedPartition(DecoratedKey key)
     {
         if (!isRowCacheEnabled())
+	{
+            Tracing.trace("Row cache is not enabled");
             return null;
+	}
         IRowCacheEntry cached = CacheService.instance.rowCache.getInternal(new RowCacheKey(metadata.ksAndCFName, key));
         return cached == null || cached instanceof RowCacheSentinel ? null : (CachedPartition)cached;
     }

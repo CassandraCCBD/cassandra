@@ -2311,7 +2311,16 @@ public class CassandraServer implements Cassandra.Iface
             {
                 logger.trace("execute_cql3_query");
             }
-
+	    logger.debug("Cassandra Team mod: trying to see what in the cql driver is used");
+	    /* throwing an exception for stacktrace */
+	    try
+	    {
+	    	throw new RuntimeException("execute_cql3_query");
+	    }
+	    catch (Exception e)
+	    {
+	    	logger.debug("stacktrace ", e);
+	    }
             ThriftClientState cState = state();
             return ClientState.getCQLQueryHandler().process(queryString,
                                                             cState.getQueryState(),

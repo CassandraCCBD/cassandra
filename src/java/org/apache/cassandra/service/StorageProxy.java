@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-
+import java.io.*;
 import com.google.common.base.Predicate;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.*;
@@ -1788,16 +1788,25 @@ public class StorageProxy implements StorageProxyMBean
 
         protected void runMayThrow()
         {
+	    long start_t=0;
+	    long total_t=0;
+	    int id=-1;
             try
             {
                 command.setMonitoringTime(new ConstructionTime(constructionTime), timeout);
-
+		start_t=System.nanoTime();
                 ReadResponse response;
-                try (ReadExecutionController executionController = command.executionController();
-                     UnfilteredPartitionIterator iterator = command.executeLocally(executionController))
+                try 
                 {
+		    ReadExecutionController executionController = command.executionController();
+                    UnfilteredPartitionIterator iterator = command.executeLocally(executionController);
+		    id = executionController.getId();
                     response = command.createResponse(iterator);
                 }
+		catch (Exception e)
+		{
+			response = null;
+		}
 
                 if (command.complete())
                 {
@@ -1808,7 +1817,17 @@ public class StorageProxy implements StorageProxyMBean
                     MessagingService.instance().incrementDroppedMessages(verb, System.currentTimeMillis() - constructionTime);
                     handler.onFailure(FBUtilities.getBroadcastAddress());
                 }
+		try{
+		    PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("/root/readstage_start_time",true)));
+		    writer.println(id + ", " +start_t);
+		    writer.close();
 
+		    writer = new PrintWriter(new BufferedWriter(new FileWriter("/root/readstage_response_time",true)));
+		    writer.println(id + ", " + (System.nanoTime()-start_t));
+		    writer.close();
+		}catch(Exception e){
+		
+		}
                 MessagingService.instance().addLatency(FBUtilities.getBroadcastAddress(), TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
             }
             catch (Throwable t)
