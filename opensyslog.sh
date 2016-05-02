@@ -1,2 +1,2 @@
 #!/bin/bash
-vim /var/log/cassandra/system.log
+vim logs/system.log

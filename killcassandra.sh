@@ -1,3 +1,3 @@
 #!/bin/bash
 pid=`cat PID`
-kill $pid
+kill -9 $pid

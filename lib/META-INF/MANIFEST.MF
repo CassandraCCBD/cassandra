@@ -1,0 +1,35 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1459854123087
+Build-Jdk: 1.8.0_71-debug
+Built-By: root
+Bundle-Description: A driver for Apache Cassandra 1.2+ that works exclus
+ ively with the Cassandra Query Language version 3        (CQL3) and Cas
+ sandra's binary protocol.
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-ManifestVersion: 2
+Bundle-Name: DataStax Java Driver for Apache Cassandra - Core
+Bundle-SymbolicName: com.datastax.driver.core
+Bundle-Version: 3.0.1.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Export-Package: com.datastax.driver.core;uses:="com.codahale.metrics,com
+ .datastax.driver.core.exceptions,com.datastax.driver.core.policies,com.
+ google.common.reflect,com.google.common.util.concurrent,javax.net.ssl,o
+ rg.slf4j";version="3.0.1.SNAPSHOT",com.datastax.driver.core.querybuilde
+ r;uses:="com.datastax.driver.core,com.datastax.driver.core.policies";ve
+ rsion="3.0.1.SNAPSHOT",com.datastax.driver.core.utils;uses:="com.google
+ .common.util.concurrent";version="3.0.1.SNAPSHOT",com.datastax.driver.c
+ ore.exceptions;uses:="com.datastax.driver.core,com.google.common.reflec
+ t";version="3.0.1.SNAPSHOT",com.datastax.driver.core.schemabuilder;uses
+ :="com.datastax.driver.core,com.google.common.base";version="3.0.1.SNAP
+ SHOT",com.datastax.driver.core.policies;uses:="com.datastax.driver.core
+ ,com.datastax.driver.core.exceptions,com.google.common.base";version="3
+ .0.1.SNAPSHOT"
+Import-Package: com.google.common.base;version="[16.0.1,19)",com.google.
+ common.cache;version="[16.0.1,19)",com.google.common.collect;version="[
+ 16.0.1,19)",com.google.common.primitives;version="[16.0.1,19)",com.goog
+ le.common.reflect;version="[16.0.1,19)",com.google.common.util.concurre
+ nt;version="[16.0.1,19)",com.codahale.metrics;version="[3.1,4)",javax.n
+ aming,javax.naming.directory,javax.net.ssl,net.jpountz.lz4;resolution:=
+ optional,org.HdrHistogram;resolution:=optional,org.slf4j;version="[1.7,
+ 2)",org.xerial.snappy;version="[1.0,2)";resolution:=optional
+Tool: Bnd-2.1.0.20130426-122213

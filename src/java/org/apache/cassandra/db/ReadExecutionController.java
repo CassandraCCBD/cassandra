@@ -93,7 +93,8 @@ public class ReadExecutionController implements AutoCloseable
 	 */
         if (indexCfs == null)
         {
-            return new ReadExecutionController(baseCfs.readOrdering.start(), null, null);
+	    tempid = ReadStageMapping.getAndIncrementId();
+            return new ReadExecutionController(baseCfs.readOrdering.start(), null, null, tempid);
         }
         else
         {

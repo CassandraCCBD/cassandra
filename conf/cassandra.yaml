@@ -359,7 +359,7 @@ seed_provider:
       parameters:
           # seeds is actually a comma-delimited list of addresses.
           # Ex: "<ip1>,<ip2>,<ip3>"
-          - seeds: "10.10.3.136"
+          - seeds: "10.10.1.69"
 
 # For workloads with more data than can fit in memory, Cassandra's
 # bottleneck will be reads that need to fetch data from
@@ -489,7 +489,7 @@ ssl_storage_port: 7001
 # you can specify which should be chosen using listen_interface_prefer_ipv6. If false the first ipv4
 # address will be used. If true the first ipv6 address will be used. Defaults to false preferring
 # ipv4. If there is only one address it will be selected regardless of ipv4/ipv6.
-listen_address: 10.10.3.136
+listen_address: 10.10.1.69
 # listen_interface: eth0
 # listen_interface_prefer_ipv6: false
 
@@ -528,7 +528,7 @@ native_transport_port: 9042
 # This is similar to rpc_max_threads though the default differs slightly (and
 # there is no native_transport_min_threads, idle threads will always be stopped
 # after 30 seconds).
-# native_transport_max_threads: 128
+native_transport_max_threads: 2048
 #
 # The maximum size of allowed frame. Frame (requests) larger than this will
 # be rejected as invalid. The default is 256MB.
@@ -563,7 +563,7 @@ start_rpc: true
 # you can specify which should be chosen using rpc_interface_prefer_ipv6. If false the first ipv4
 # address will be used. If true the first ipv6 address will be used. Defaults to false preferring
 # ipv4. If there is only one address it will be selected regardless of ipv4/ipv6.
-rpc_address: 10.10.3.136
+rpc_address: 10.10.1.69
 # rpc_interface: eth1
 # rpc_interface_prefer_ipv6: false
 

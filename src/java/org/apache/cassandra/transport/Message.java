@@ -46,7 +46,7 @@ import org.apache.cassandra.service.ClientWarn;
 import org.apache.cassandra.transport.messages.*;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.utils.JVMStabilityInspector;
-
+import org.apache.cassandra.modeling.*;
 /**
  * A message from the CQL binary protocol.
  */
@@ -150,7 +150,7 @@ public abstract class Message
     private int streamId;
     private Frame sourceFrame;
     private Map<String, ByteBuffer> customPayload;
-
+    private int tags;
     protected Message(Type type)
     {
         this.type = type;
@@ -200,7 +200,8 @@ public abstract class Message
     public static abstract class Request extends Message
     {
         protected boolean tracingRequested;
-
+	int tag=-11;
+	String quer="";
         protected Request(Type type)
         {
             super(type);
@@ -208,9 +209,16 @@ public abstract class Message
             if (type.direction != Direction.REQUEST)
                 throw new IllegalArgumentException();
         }
+        protected Request(Type type,String q){
+		super(type);
+		this.quer=q;	
+	}
 
         public abstract Response execute(QueryState queryState);
-
+	//public abstract void setTagLevel(int a);
+	//public int getTagLevel(){
+	//return 0;	
+	//}
         public void setTracingRequested()
         {
             this.tracingRequested = true;
@@ -494,7 +502,8 @@ public abstract class Message
             final Response response;
             final ServerConnection connection;
 	    long start_t=System.nanoTime();
-
+	    String query="";
+	    int limit=0,type=100;
             try
             {
                 assert request.connection() instanceof ServerConnection;
@@ -503,21 +512,30 @@ public abstract class Message
                     ClientWarn.instance.captureWarnings();
 
                 QueryState qstate = connection.validateNewMessage(request.type, connection.getVersion(), request.getStreamId());
-
+		QueueLengthBuffer buff = new QueueLengthBuffer();
+		// we initialize the times
+		buff = QueueLengths.foregroundActivity(buff);
                 logger.trace("Received: {}, v={}", request, connection.getVersion());
+		query=request.quer;
+		if(query.startsWith("SELECT")){
+			type=0;
+		}else
+			type=1;
+		try
+		{
+			limit=Integer.parseInt((query.split(" LIMIT ")[1]).split(";")[0]);
+		}
+		catch(Exception e)
+		{
+			limit=0;
+		}
+		logger.debug(" TYPE "+type+" LIMIT "+limit);
+		buff.getParams(type,limit);
+		// we add the response time now 
                 response = request.execute(qstate);
-                try{
-		PrintWriter writer=new PrintWriter(new BufferedWriter(new FileWriter("/root/native_start_time",true)));
-		writer.println(start_t);
-		writer.close();
-
-		writer=new PrintWriter(new BufferedWriter(new FileWriter("/root/native_response_time",true)));
-		writer.println(System.nanoTime()-start_t);
-		writer.close();
-		}catch(Exception e){}
-		
-		
-		
+		long end_t = System.nanoTime();
+		buff.setResponseTime(end_t-start_t, type);
+		buff.dumpToFile(null);
 		
 		
 		response.setStreamId(request.getStreamId());

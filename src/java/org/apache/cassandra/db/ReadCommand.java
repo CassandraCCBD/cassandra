@@ -77,6 +77,11 @@ public abstract class ReadCommand extends MonitorableImpl implements ReadQuery
     private final RowFilter rowFilter;
     private final DataLimits limits;
 
+    public int getLimits()
+    {
+    	return limits.count();
+    }
+
     // SecondaryIndexManager will attempt to provide the most selective of any available indexes
     // during execution. Here we also store an the results of that lookup to repeating it over
     // the lifetime of the command.

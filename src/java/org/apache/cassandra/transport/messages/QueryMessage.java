@@ -33,12 +33,14 @@ import org.apache.cassandra.transport.Message;
 import org.apache.cassandra.transport.ProtocolException;
 import org.apache.cassandra.utils.JVMStabilityInspector;
 import org.apache.cassandra.utils.UUIDGen;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * A CQL query
  */
 public class QueryMessage extends Message.Request
 {
+    protected static final Logger logger = LoggerFactory.getLogger(QueryMessage.class);
     public static final Message.Codec<QueryMessage> codec = new Message.Codec<QueryMessage>()
     {
         public QueryMessage decode(ByteBuf body, int version)
@@ -72,18 +74,41 @@ public class QueryMessage extends Message.Request
         }
     };
 
-    public final String query;
+    public String query;
     public final QueryOptions options;
-
+    public String temp[];
+    public String tag;
     public QueryMessage(String query, QueryOptions options)
     {
-        super(Type.QUERY);
+        super(Type.QUERY,query);
         this.query = query;
         this.options = options;
     }
-
+    //public int getTagLevel(){
+    //	try
+    //	{
+    //		return Integer.parseInt(this.tag);
+    //	}
+ //	catch (Exception e)
+//	{
+		// the query never contained tag
+//		return 0;
+//	}
+  //  }
     public Message.Response execute(QueryState state)
     {
+        /*temp=query.split(" TAG ");
+	logger.debug(" QUERY "+this.query);
+	for(int i=0;i<temp.length;i++){
+		if(i==0){
+			this.query=temp[i]+";";
+			continue;
+		}
+		logger.debug(" TAG="+temp[i]);
+		this.tag=temp[i];
+		logger.debug("This.tag is " + this.tag);
+	}
+	logger.debug("TAG!!"+tag);*/
         try
         {
             if (options.getPageSize() == 0)

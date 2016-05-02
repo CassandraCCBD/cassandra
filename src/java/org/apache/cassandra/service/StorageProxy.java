@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.cassandra.modeling.*;
 import org.apache.cassandra.batchlog.Batch;
 import org.apache.cassandra.batchlog.BatchlogManager;
 import org.apache.cassandra.batchlog.LegacyBatchlogMigrator;
@@ -1795,6 +1796,13 @@ public class StorageProxy implements StorageProxyMBean
             {
                 command.setMonitoringTime(new ConstructionTime(constructionTime), timeout);
 		start_t=System.nanoTime();
+		// set the Queue Length buffer parameters
+		QueueLengthBuffer buff = new QueueLengthBuffer();
+		buff = QueueLengths.foregroundActivity(buff);
+		int limits = command.getLimits();
+		buff.getParams(-1,limits);
+		QueueLengths.numReadStage.incrementAndGet();		
+		QueueLengths.numRecord.addAndGet(command.getLimits());
                 ReadResponse response;
                 try 
                 {
@@ -1818,13 +1826,9 @@ public class StorageProxy implements StorageProxyMBean
                     handler.onFailure(FBUtilities.getBroadcastAddress());
                 }
 		try{
-		    PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("/root/readstage_start_time",true)));
-		    writer.println(id + ", " +start_t);
-		    writer.close();
-
-		    writer = new PrintWriter(new BufferedWriter(new FileWriter("/root/readstage_response_time",true)));
-		    writer.println(id + ", " + (System.nanoTime()-start_t));
-		    writer.close();
+		buff.dumpToFile("~/metrics/ReadStageMetrics");
+		QueueLengths.numReadStage.decrementAndGet();
+		QueueLengths.numRecord.addAndGet(-command.getLimits());
 		}catch(Exception e){
 		
 		}
