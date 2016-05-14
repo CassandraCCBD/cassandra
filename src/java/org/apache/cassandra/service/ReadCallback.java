@@ -121,6 +121,7 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 	buff = QueueLengths.foregroundActivity(buff);
 	int limits = 0;
 	buff.getParams(-1,limits);
+	buff.addItem("endpoint", this.endpoints.toString());
         boolean signaled = await(command.getTimeout(), TimeUnit.MILLISECONDS);
         boolean failed = blockfor + failures > endpoints.size();
         if (signaled && !failed)

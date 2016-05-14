@@ -34,6 +34,11 @@ public class QueueLengthBuffer
 			QueueLengths.numNativeWrite.decrementAndGet();
 		}
 	}
+
+	public void addItem(Object key, Object value)
+	{
+		this.tpstats.put(key,value);
+	}
 	public void getParams(int type, int limit)
 	{
 		if (type==0)
