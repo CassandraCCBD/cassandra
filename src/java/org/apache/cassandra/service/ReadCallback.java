@@ -45,6 +45,8 @@ import org.apache.cassandra.tracing.TraceState;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.concurrent.SimpleCondition;
+//cassandra team mod
+import org.apache.cassandra.modeling.*;
 
 public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 {
@@ -108,13 +110,26 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
         }
     }
 
+    //Cassandra Team: Once the non local request is sent out, it ends up here, we dump the waiting time here, and run it through a decision tree
+    //		      to check the performance predictability of this function
     public void awaitResults() throws ReadFailureException, ReadTimeoutException
     {
+    	long startTime, endTime;
+	startTime = System.nanoTime();
+	// we get the current system state parameters as well
+	QueueLengthBuffer buff = new QueueLengthBuffer();
+	buff = QueueLengths.foregroundActivity(buff);
+	int limits = 0;
+	buff.getParams(-1,limits);
         boolean signaled = await(command.getTimeout(), TimeUnit.MILLISECONDS);
         boolean failed = blockfor + failures > endpoints.size();
         if (signaled && !failed)
+	{
+	    //we dump the response time of this to buff
+	    buff.setResponseTime(System.nanoTime()-startTime, -1);
+	    buff.dumpToFile("/root/metrics/NonLocalSuccess");
             return;
-
+	}
         if (Tracing.isTracing())
         {
             String gotData = received > 0 ? (resolver.isDataPresent() ? " (including data)" : " (only digests)") : "";

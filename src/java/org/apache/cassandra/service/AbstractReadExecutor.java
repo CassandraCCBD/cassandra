@@ -94,7 +94,9 @@ public abstract class AbstractReadExecutor
     private void makeRequests(ReadCommand readCommand, Iterable<InetAddress> endpoints)
     {
         boolean hasLocalEndpoint = false;
-
+	// we try and get a measure of the local vs nonlocal requests that are going out as reads
+	// There seems to be a pretty major mismatch
+	int local=0, nonlocal=0;
         for (InetAddress endpoint : endpoints)
         {
             if (StorageProxy.canDoLocalRequest(endpoint))

@@ -27,6 +27,8 @@ public class QueueLengthBuffer
 		{
 			QueueLengths.numNativeRead.decrementAndGet();
 		}
+		else if (type==-1)
+		{}
 		else
 		{
 			QueueLengths.numNativeWrite.decrementAndGet();
@@ -72,10 +74,11 @@ public class QueueLengthBuffer
 					writer.print(tpstats.get(ob) + ",");
 				writer.println(responseTime);
 				writer.close();
+				logger.debug("Succeeded writing tpstats " + path);
 			}
 			catch (Exception e)
 			{
-				logger.debug("Writing tpstats failed");
+				logger.debug("Writing tpstats failed ", e);
 			}
 	}
 	

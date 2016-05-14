@@ -1826,7 +1826,8 @@ public class StorageProxy implements StorageProxyMBean
                     handler.onFailure(FBUtilities.getBroadcastAddress());
                 }
 		try{
-		buff.dumpToFile("~/metrics/ReadStageMetrics");
+		buff.setResponseTime(System.nanoTime()-start_t,-1);
+		buff.dumpToFile("/root/metrics/ReadStageMetrics");
 		QueueLengths.numReadStage.decrementAndGet();
 		QueueLengths.numRecord.addAndGet(-command.getLimits());
 		}catch(Exception e){
