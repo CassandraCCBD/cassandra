@@ -27,6 +27,9 @@ public class QueueLengthBuffer
 		{
 			QueueLengths.numNativeRead.decrementAndGet();
 		}
+		else if (type==-1)
+		{
+		}
 		else
 		{
 			QueueLengths.numNativeWrite.decrementAndGet();
@@ -66,9 +69,9 @@ public class QueueLengthBuffer
 		if (path==null)
 		{
 			if ((int)tpstats.get("Type") ==0)
-				path = "/root/metrics/metrics1Read";
+				path = "~/metrics/metrics1Read";
 			else
-				path =  "/root/metrics/metrics1Write";
+				path =  "~/metrics/metrics1Write";
 		}
 			try
 			{

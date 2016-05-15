@@ -45,6 +45,8 @@ import org.apache.cassandra.tracing.TraceState;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.concurrent.SimpleCondition;
+//Cassandra Team mod
+import org.apache.cassandra.modeling.*;
 
 public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 {
@@ -110,21 +112,22 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 
     public void awaitResults() throws ReadFailureException, ReadTimeoutException
     {
-<<<<<<< HEAD
     	long startTime, endTime;
-	startTime = System.nanoTime();
-	// we get the current system state parameters as well
-	QueueLengthBuffer buff = new QueueLengthBuffer();
-	buff = QueueLengths.foregroundActivity(buff);
-	int limits = 0;
-	buff.getParams(-1,limits);
-	buff.addItem("endpoint", this.endpoints.toString());
-=======
->>>>>>> parent of fdcea29... removed conf
+		startTime = System.nanoTime();
+		// we get the current system state parameters as well
+		QueueLengthBuffer buff = new QueueLengthBuffer();
+		buff = QueueLengths.foregroundActivity(buff);
+		int limits = 0;
+		buff.getParams(-1,limits);
+		buff.addItem("endpoint", this.endpoints.toString());
         boolean signaled = await(command.getTimeout(), TimeUnit.MILLISECONDS);
         boolean failed = blockfor + failures > endpoints.size();
         if (signaled && !failed)
+		{
+			buff.setResponseTime(System.nanoTime()-startTime, -1);
+			buff.dumpToFile("~/metrics/NonLocalReadSuccess");
             return;
+		}
 
         if (Tracing.isTracing())
         {
