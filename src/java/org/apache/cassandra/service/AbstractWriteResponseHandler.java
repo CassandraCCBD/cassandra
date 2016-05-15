@@ -96,7 +96,7 @@ public abstract class AbstractWriteResponseHandler<T> implements IAsyncCallbackW
         }
 	// the write was done (error or not error :P)
 	buff.setResponseTime(System.nanoTime() - startTime, -1);
-	buff.dumpToFile("~/metrics/AllWrites");
+	buff.dumpToFile("/root/metrics/AllWrites");
         if (!success)
         {
             int blockedFor = totalBlockFor();

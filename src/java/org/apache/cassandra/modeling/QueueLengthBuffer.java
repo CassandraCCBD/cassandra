@@ -69,9 +69,9 @@ public class QueueLengthBuffer
 		if (path==null)
 		{
 			if ((int)tpstats.get("Type") ==0)
-				path = "~/metrics/metrics1Read";
+				path = "/root/metrics/metrics1Read";
 			else
-				path =  "~/metrics/metrics1Write";
+				path =  "/root/metrics/metrics1Write";
 		}
 			try
 			{
@@ -83,7 +83,7 @@ public class QueueLengthBuffer
 			}
 			catch (Exception e)
 			{
-				logger.debug("Writing tpstats failed");
+				logger.debug("Writing tpstats failed", e);
 			}
 	}
 	
