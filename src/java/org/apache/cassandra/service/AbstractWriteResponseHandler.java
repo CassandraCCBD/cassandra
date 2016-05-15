@@ -36,6 +36,8 @@ import org.apache.cassandra.net.IAsyncCallbackWithFailure;
 import org.apache.cassandra.net.MessageIn;
 import org.apache.cassandra.utils.concurrent.SimpleCondition;
 
+import org.apache.cassandra.modeling.*;
+
 public abstract class AbstractWriteResponseHandler<T> implements IAsyncCallbackWithFailure<T>
 {
     protected static final Logger logger = LoggerFactory.getLogger( AbstractWriteResponseHandler.class );
@@ -76,9 +78,13 @@ public abstract class AbstractWriteResponseHandler<T> implements IAsyncCallbackW
         long requestTimeout = writeType == WriteType.COUNTER
                             ? DatabaseDescriptor.getCounterWriteRpcTimeout()
                             : DatabaseDescriptor.getWriteRpcTimeout();
-
+	long startTime = System.nanoTime();
+	// we get the current system state parameters as well
+	QueueLengthBuffer buff = new QueueLengthBuffer();
+	buff = QueueLengths.foregroundActivity(buff);
+	int limits = 0;
+	buff.getParams(-1,limits);
         long timeout = TimeUnit.MILLISECONDS.toNanos(requestTimeout) - (System.nanoTime() - start);
-
         boolean success;
         try
         {
@@ -88,7 +94,9 @@ public abstract class AbstractWriteResponseHandler<T> implements IAsyncCallbackW
         {
             throw new AssertionError(ex);
         }
-
+	// the write was done (error or not error :P)
+	buff.setResponseTime(System.nanoTime() - startTime, -1);
+	buff.dumpToFile("~/metrics/AllWrites");
         if (!success)
         {
             int blockedFor = totalBlockFor();

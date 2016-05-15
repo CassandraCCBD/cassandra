@@ -113,13 +113,13 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
     public void awaitResults() throws ReadFailureException, ReadTimeoutException
     {
     	long startTime, endTime;
-		startTime = System.nanoTime();
-		// we get the current system state parameters as well
-		QueueLengthBuffer buff = new QueueLengthBuffer();
-		buff = QueueLengths.foregroundActivity(buff);
-		int limits = 0;
-		buff.getParams(-1,limits);
-		buff.addItem("endpoint", this.endpoints.toString());
+	startTime = System.nanoTime();
+	// we get the current system state parameters as well
+	QueueLengthBuffer buff = new QueueLengthBuffer();
+	buff = QueueLengths.foregroundActivity(buff);
+	int limits = 0;
+	buff.getParams(-1,limits);
+	buff.addItem("endpoint", this.endpoints.toString());
         boolean signaled = await(command.getTimeout(), TimeUnit.MILLISECONDS);
         boolean failed = blockfor + failures > endpoints.size();
         if (signaled && !failed)
