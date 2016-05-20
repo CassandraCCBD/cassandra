@@ -1808,16 +1808,20 @@ public class StorageProxy implements StorageProxyMBean
 				QueueLengths.numReadStage.incrementAndGet();		
 				QueueLengths.numRecord.addAndGet(command.getLimits());
 				// we add this to the decision tree
-				ArrayList<Double> row = buff.toArrayList();
-				if (AllTrees.Readstage.treeAvailable())
+				try
 				{
-					// we can test 
-					// we hardcode the RT to 0 since we anyway don't use it
-					row.add(0.0);
-					expectedRT = AllTrees.Readstage.unitTest(row);
-					tree = true;
+					ArrayList<Double> row = buff.toArrayList();
+					if (AllTrees.Readstage.treeAvailable())
+					{
+						// we can test 
+						// we hardcode the RT to 0 since we anyway don't use it
+						row.add(0.0);
+						expectedRT = AllTrees.Readstage.unitTest(row);
+						tree = true;
+					}
 				}
-
+				catch(Exception e)
+				{}
                 ReadResponse response;
                 try 
                 {
@@ -1842,30 +1846,30 @@ public class StorageProxy implements StorageProxyMBean
                 }
 				try
 				{
-				total_t = (double)(System.nanoTime() - start_t);
-				// if tree isn't available we need to add it to the training dataset
-				if (!tree)
-				{
-					row.add((Double)total_t);
-					AllTrees.Readstage.addToDataset(row);
+				/*		total_t = (double)(System.nanoTime() - start_t);
+						// if tree isn't available we need to add it to the training dataset
+						if (!tree)
+						{
+							row.add((Double)total_t);
+							AllTrees.Readstage.addToDataset(row);
 
-				}
-				
-				QueueLengths.numReadStage.decrementAndGet();
-				QueueLengths.numRecord.addAndGet(-command.getLimits());
+						}*/
+						
+						QueueLengths.numReadStage.decrementAndGet();
+						QueueLengths.numRecord.addAndGet(-command.getLimits());
 				}
 				catch(Exception e){
 				
 				}
 						MessagingService.instance().addLatency(FBUtilities.getBroadcastAddress(), TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
-				}
+			}
             catch (Throwable t)
             {
                 handler.onFailure(FBUtilities.getBroadcastAddress());
                 if (t instanceof TombstoneOverwhelmingException)
                     logger.error(t.getMessage());
-                /*else
-                    throw t;*/
+                else
+                    throw t;
             }
         }
     }
