@@ -342,6 +342,8 @@
         <license name="The Apache Software License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
         <scm connection="${scm.connection}" developerConnection="${scm.developerConnection}" url="${scm.url}"/>
         <dependencyManagement>
+	  <!-- http://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-stable -->
+	  <dependency groupId="nz.ac.waikato.cms.weka" artifactId="weka-stable" version="3.6.6"/>
           <dependency groupId="org.xerial.snappy" artifactId="snappy-java" version="1.1.1.7"/>
           <dependency groupId="net.jpountz.lz4" artifactId="lz4" version="1.3.0"/>
           <dependency groupId="com.ning" artifactId="compress-lzf" version="0.8.4"/>
@@ -381,7 +383,7 @@
           </dependency>
           <dependency groupId="org.apache.hadoop" artifactId="hadoop-core" version="1.0.3">
           	<exclusion groupId="org.mortbay.jetty" artifactId="servlet-api"/>
-          	<exclusion groupId="commons-logging" artifactId="commons-logging"/>
+          <exclusion groupId="commons-logging" artifactId="commons-logging"/>
           	<exclusion groupId="org.eclipse.jdt" artifactId="core"/>
 		    <exclusion groupId="ant" artifactId="ant"/>
           </dependency>
@@ -524,6 +526,7 @@
                 artifactId="cassandra-parent"
                 version="${version}"/>
         <scm connection="${scm.connection}" developerConnection="${scm.developerConnection}" url="${scm.url}"/>
+	<dependency groupId="nz.ac.waikato.cms.weka" artifactId="weka-stable" version="3.6.6"/>
         <dependency groupId="org.xerial.snappy" artifactId="snappy-java"/>
         <dependency groupId="net.jpountz.lz4" artifactId="lz4"/>
         <dependency groupId="com.ning" artifactId="compress-lzf"/>

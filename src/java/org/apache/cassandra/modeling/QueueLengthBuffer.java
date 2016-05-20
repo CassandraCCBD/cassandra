@@ -2,6 +2,7 @@ package org.apache.cassandra.modeling;
 
 import java.util.LinkedHashMap;
 import java.io.*;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,17 @@ public class QueueLengthBuffer
 		tpstats.put("numReadStage", QueueLengths.numReadStage.get());
 	}
 
+	public ArrayList<Double> toArrayList()
+	{
+		ArrayList<Double> temp = new ArrayList<Double>();
+		for (Object key: tpstats.keySet())
+		{
+			temp.add((Double)tpstats.get(key));
+		}
+		return temp;
+	}
+			
+			
 	public void dumpToFile(String path)
 	{
 		if (path==null)

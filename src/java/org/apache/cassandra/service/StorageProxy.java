@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.modeling.*;
+import org.apache.cassandra.ml.*;
 import org.apache.cassandra.batchlog.Batch;
 import org.apache.cassandra.batchlog.BatchlogManager;
 import org.apache.cassandra.batchlog.LegacyBatchlogMigrator;
@@ -1790,31 +1791,45 @@ public class StorageProxy implements StorageProxyMBean
         protected void runMayThrow()
         {
 	    long start_t=0;
-	    long total_t=0;
+	    double total_t=0;
 	    int id=-1;
+	    double expectedRT = 0;
+	    // true if the tree has been built
+	    boolean tree=false;
             try
             {
                 command.setMonitoringTime(new ConstructionTime(constructionTime), timeout);
-		start_t=System.nanoTime();
-		// set the Queue Length buffer parameters
-		QueueLengthBuffer buff = new QueueLengthBuffer();
-		buff = QueueLengths.foregroundActivity(buff);
-		int limits = command.getLimits();
-		buff.getParams(-1,limits);
-		QueueLengths.numReadStage.incrementAndGet();		
-		QueueLengths.numRecord.addAndGet(command.getLimits());
+				start_t=System.nanoTime();
+				// set the Queue Length buffer parameters
+				QueueLengthBuffer buff = new QueueLengthBuffer();
+				buff = QueueLengths.foregroundActivity(buff);
+				int limits = command.getLimits();
+				buff.getParams(-1,limits);
+				QueueLengths.numReadStage.incrementAndGet();		
+				QueueLengths.numRecord.addAndGet(command.getLimits());
+				// we add this to the decision tree
+				ArrayList<Double> row = buff.toArrayList();
+				if (AllTrees.Readstage.treeAvailable())
+				{
+					// we can test 
+					// we hardcode the RT to 0 since we anyway don't use it
+					row.add(0.0);
+					expectedRT = AllTrees.Readstage.unitTest(row);
+					tree = true;
+				}
+
                 ReadResponse response;
                 try 
                 {
-		    ReadExecutionController executionController = command.executionController();
+					ReadExecutionController executionController = command.executionController();
                     UnfilteredPartitionIterator iterator = command.executeLocally(executionController);
-		    id = executionController.getId();
+					id = executionController.getId();
                     response = command.createResponse(iterator);
                 }
-		catch (Exception e)
-		{
-			response = null;
-		}
+				catch (Exception e)
+				{
+					response = null;
+				}
 
                 if (command.complete())
                 {
@@ -1825,22 +1840,32 @@ public class StorageProxy implements StorageProxyMBean
                     MessagingService.instance().incrementDroppedMessages(verb, System.currentTimeMillis() - constructionTime);
                     handler.onFailure(FBUtilities.getBroadcastAddress());
                 }
-		try{
-		buff.dumpToFile("~/metrics/ReadStageMetrics");
-		QueueLengths.numReadStage.decrementAndGet();
-		QueueLengths.numRecord.addAndGet(-command.getLimits());
-		}catch(Exception e){
-		
-		}
-                MessagingService.instance().addLatency(FBUtilities.getBroadcastAddress(), TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
-            }
+				try
+				{
+				total_t = (double)(System.nanoTime() - start_t);
+				// if tree isn't available we need to add it to the training dataset
+				if (!tree)
+				{
+					row.add((Double)total_t);
+					AllTrees.Readstage.addToDataset(row);
+
+				}
+				
+				QueueLengths.numReadStage.decrementAndGet();
+				QueueLengths.numRecord.addAndGet(-command.getLimits());
+				}
+				catch(Exception e){
+				
+				}
+						MessagingService.instance().addLatency(FBUtilities.getBroadcastAddress(), TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+				}
             catch (Throwable t)
             {
                 handler.onFailure(FBUtilities.getBroadcastAddress());
                 if (t instanceof TombstoneOverwhelmingException)
                     logger.error(t.getMessage());
-                else
-                    throw t;
+                /*else
+                    throw t;*/
             }
         }
     }

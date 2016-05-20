@@ -123,11 +123,11 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
         boolean signaled = await(command.getTimeout(), TimeUnit.MILLISECONDS);
         boolean failed = blockfor + failures > endpoints.size();
         if (signaled && !failed)
-		{
-			buff.setResponseTime(System.nanoTime()-startTime, -1);
-			buff.dumpToFile("~/metrics/NonLocalReadSuccess");
-            return;
-		}
+	{
+		buff.setResponseTime(System.nanoTime()-startTime, -1);
+		buff.dumpToFile("/root/metrics/NonLocalReadSuccess");
+		return;
+	}
 
         if (Tracing.isTracing())
         {
