@@ -555,7 +555,7 @@ public abstract class Message
                 ClientWarn.instance.resetWarnings();
             }
 
-            logger.trace("Responding: {}, v={}", response, connection.getVersion());
+            //logger.trace("Responding: {}, v={}", response, connection.getVersion());
             flush(new FlushItem(ctx, response, request.getSourceFrame()));
         }
 

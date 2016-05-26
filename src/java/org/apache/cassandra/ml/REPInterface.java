@@ -21,12 +21,12 @@ public interface REPInterface
 	/** Creates the Decision tree once the size of the instance has crossed a particular limit
 	 *  will be invoked internally by checkSize
 	 */
-	void buildTree() throws Exception;
+	void buildTree();
 
 	/** Creates a instance of size one, passes it into the REP Tree
 	 *  gives the expected value of response time 
 	 */
-	public double unitTest(ArrayList<Double> row) throws Exception;
+	public double unitTest(ArrayList<Double> row) ;
 
 	/** Called if the dataset available for the tree is not large enough
 	 *  to build the tree. 

@@ -57,6 +57,7 @@ import org.apache.cassandra.dht.*;
 import org.apache.cassandra.exceptions.*;
 import org.apache.cassandra.gms.FailureDetector;
 import org.apache.cassandra.gms.Gossiper;
+import org.apache.cassandra.gms.*;
 import org.apache.cassandra.hints.Hint;
 import org.apache.cassandra.hints.HintsService;
 import org.apache.cassandra.index.Index;
@@ -101,7 +102,8 @@ public class StorageProxy implements StorageProxyMBean
     private static final ClientRequestMetrics rangeMetrics = new ClientRequestMetrics("RangeSlice");
     private static final ClientRequestMetrics writeMetrics = new ClientRequestMetrics("Write");
     private static final CASClientRequestMetrics casWriteMetrics = new CASClientRequestMetrics("CASWrite");
-    private static final CASClientRequestMetrics casReadMetrics = new CASClientRequestMetrics("CASRead");
+	//public static final IVersionedSerializer<EchoCommand> serializer = new Serializer();
+	private static final CASClientRequestMetrics casReadMetrics = new CASClientRequestMetrics("CASRead");
     private static final ViewWriteMetrics viewWriteMetrics = new ViewWriteMetrics("ViewWrite");
 
     private static final double CONCURRENT_SUBREQUESTS_MARGIN = 0.10;
@@ -1702,6 +1704,16 @@ public class StorageProxy implements StorageProxyMBean
         void doInitialQueries()
         {
             executor.executeAsync();
+
+        /*    for (InetAddress endpoint : executor.handler.endpoints)
+            {
+				logger.debug(" MSG sending ");
+
+     			MessageOut<EchoMessage> message = new MessageOut<EchoMessage>(MessagingService.Verb.ECHO,null,EchoMessage.serializer);
+				logger.debug(" MESSAGE "+message);
+            	MessagingService.instance().sendOneWay(message, endpoint);
+				logger.debug("MSG sent ");
+            }*/
         }
 
         void maybeTryAdditionalReplicas()
@@ -1736,6 +1748,11 @@ public class StorageProxy implements StorageProxyMBean
                     MessageOut<ReadCommand> message = command.createMessage(MessagingService.instance().getVersion(endpoint));
                     Tracing.trace("Enqueuing full data read to {}", endpoint);
                     MessagingService.instance().sendRRWithFailure(message, endpoint, repairHandler);
+					//logger.debug(" MSG sending ");
+
+        			//message = new MessageOut(MessagingService.Verb.ECHO);
+            		//MessagingService.instance().sendOneWay(message, endpoint);
+					//logger.debug("MSG sent ");
                 }
             }
         }
@@ -1796,6 +1813,7 @@ public class StorageProxy implements StorageProxyMBean
 	    double expectedRT = 0;
 	    // true if the tree has been built
 	    boolean tree=false;
+		ArrayList<Double> row = null;
             try
             {
                 command.setMonitoringTime(new ConstructionTime(constructionTime), timeout);
@@ -1810,7 +1828,7 @@ public class StorageProxy implements StorageProxyMBean
 				// we add this to the decision tree
 				try
 				{
-					ArrayList<Double> row = buff.toArrayList();
+					row = buff.toArrayList();
 					if (AllTrees.Readstage.treeAvailable())
 					{
 						// we can test 
@@ -1821,8 +1839,10 @@ public class StorageProxy implements StorageProxyMBean
 					}
 				}
 				catch(Exception e)
-				{}
-                ReadResponse response;
+				{
+					logger.debug("Exception testing ", e);
+				}
+				ReadResponse response;
                 try 
                 {
 					ReadExecutionController executionController = command.executionController();
@@ -1846,19 +1866,27 @@ public class StorageProxy implements StorageProxyMBean
                 }
 				try
 				{
-				/*		total_t = (double)(System.nanoTime() - start_t);
+						total_t = (double)(System.nanoTime() - start_t);
 						// if tree isn't available we need to add it to the training dataset
 						if (!tree)
 						{
 							row.add((Double)total_t);
 							AllTrees.Readstage.addToDataset(row);
 
-						}*/
-						
+						}
+						else
+						{
+							// we dump this data to a file
+							String path = "/root/metrics/ReadStageDT";
+							PrintWriter writer=new PrintWriter(new BufferedWriter(new FileWriter(path,true)));
+							writer.println(total_t + "," + expectedRT);
+							writer.close();
+						}
 						QueueLengths.numReadStage.decrementAndGet();
 						QueueLengths.numRecord.addAndGet(-command.getLimits());
 				}
 				catch(Exception e){
+					logger.debug("Some issue with ReadStage DT ", e);
 				
 				}
 						MessagingService.instance().addLatency(FBUtilities.getBroadcastAddress(), TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));

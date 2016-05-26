@@ -49,6 +49,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.cassandra.ml.*;
 import org.apache.cassandra.concurrent.*;
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -386,7 +387,9 @@ public class CassandraDaemon
 
         // Native transport
         nativeTransportService = new NativeTransportService();
-
+	
+		//ML - Monitoring thread
+		//StageManager.getStage(Stage.ML).execute(new Monitoring());
         completeSetup();
     }
 

@@ -68,9 +68,19 @@ public class QueueLengthBuffer
 	public ArrayList<Double> toArrayList()
 	{
 		ArrayList<Double> temp = new ArrayList<Double>();
+		Number obj;
 		for (Object key: tpstats.keySet())
 		{
-			temp.add((Double)tpstats.get(key));
+			if (tpstats.get(key).getClass().equals(String.class))
+			{
+				//obj = Double.valueOf((String)tpstats.get(key));
+			}
+			else
+			{
+				obj = (Number)tpstats.get(key);
+				double double_temp= (double)obj.longValue();
+				temp.add(double_temp);
+			}
 		}
 		return temp;
 	}

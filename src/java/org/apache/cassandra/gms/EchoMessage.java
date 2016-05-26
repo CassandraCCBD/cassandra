@@ -32,20 +32,27 @@ public final class EchoMessage
 	public static final EchoMessage instance = new EchoMessage();
 	
     public static final IVersionedSerializer<EchoMessage> serializer = new EchoMessageSerializer();
-
+	final int message;
 	private EchoMessage()
 	{
+		message=0;
+	}
+	public EchoMessage(int a){
+		this.message=a;
 	}
 	
     public static class EchoMessageSerializer implements IVersionedSerializer<EchoMessage>
     {
         public void serialize(EchoMessage t, DataOutputPlus out, int version) throws IOException
         {
+			out.writeInt(t.message);
+			
         }
 
         public EchoMessage deserialize(DataInputPlus in, int version) throws IOException
         {
-            return EchoMessage.instance;
+			int temp=in.readInt();
+            return new EchoMessage(temp);
         }
 
         public long serializedSize(EchoMessage t, int version)

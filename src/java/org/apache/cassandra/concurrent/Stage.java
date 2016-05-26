@@ -35,6 +35,7 @@ public enum Stage
     MISC,
     TRACING,
     INTERNAL_RESPONSE,
+    ML,
     READ_REPAIR;
 
     public static Iterable<Stage> jmxEnabledStages()
@@ -58,6 +59,7 @@ public enum Stage
             case MISC:
             case TRACING:
             case INTERNAL_RESPONSE:
+			case ML:
                 return "internal";
             case MUTATION:
             case COUNTER_MUTATION:

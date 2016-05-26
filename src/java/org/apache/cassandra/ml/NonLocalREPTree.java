@@ -6,7 +6,6 @@ import weka.core.Instances;
 import weka.core.*;
 import weka.core.converters.ArffLoader;
 import weka.classifiers.evaluation.Evaluation;
-import weka.classifiers.evaluation.Prediction;
 import weka.classifiers.evaluation.output.prediction.PlainText;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.classifiers.evaluation.output.prediction.AbstractOutput;
@@ -18,7 +17,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.Semaphore;
-public class TestREPTree 
+public class NonLocalREPTree implements REPInterface
 {
 	private static Logger logger = LoggerFactory.getLogger(TestREPTree.class);
 	REPTree obj;
@@ -26,19 +25,13 @@ public class TestREPTree
 	final int MAX_SIZE;
 	boolean built;
 	boolean started;
-	String name;
 	Semaphore sem = new Semaphore(1, true);
 	public Instances initInstance()
 	{
 		// we create a ArrayList of attributes
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		// we add 5 columns to this list of attributes
-		int limit;
-		/*if (this.name=="ReadStage")
-			limit=28;
-		else
-			limit=29;*/
-		for (int i=0;i<30;i++)
+		for (int i=0;i<29;i++)
 		{
 			attributes.add(new Attribute("Col"+i));
 		}
@@ -48,14 +41,13 @@ public class TestREPTree
 		return structure;
 	}
 
-	TestREPTree(int MAX_SIZE, String name)
+	NonLocalREPTree(int MAX_SIZE)
 	{
 		logger.debug("INIT of Tree");
 		this.MAX_SIZE = MAX_SIZE;
 		this.structure = initInstance();
 		started=false;
 		logger.debug("Structure is " + structure);
-		this.name= name;
 	}
 /*		// we dump a bunch of data into this
 		for (int j=0;j<100000;j++)
@@ -67,68 +59,47 @@ public class TestREPTree
 		System.out.println("After adding");
 //		System.out.println(structure);
 		/** We don't want to do the decision tree until we can build the instance properly */
-	public void buildTree() throws Exception
+	public void buildTree() 
 	{
 		try
 		{
-			if (started==true)
-			{
-				logger.debug("Already building");
-				return;
-			}
-			logger.debug("trying to build now");
-			started=true;
-			structure.setClassIndex(structure.numAttributes() - 1);
-			obj = new REPTree();
-			//obj.buildClassifier(train);
-			obj.buildClassifier(structure);
-			this.built=true;
-			logger.debug("Done building");
-			//we check this tree out in a file
-			try
-			{
-				String path = "/root/metrics/Trees";
-				PrintWriter writer=new PrintWriter(new BufferedWriter(new FileWriter(path,true)));
-				writer.println(structure);
-				writer.println("*******************************");
-				writer.println(obj);
-				writer.println("*******************************");
-				writer.println("*******************************");
-				writer.close();
-			}
-			catch(Exception e)
-			{
-				logger.debug("Couldn't write to file",e);
-			}
-			Evaluation eval = new Evaluation(structure);
-			StringBuffer preds = new StringBuffer();
-			PlainText plainText = new PlainText();
-			plainText.setHeader(structure);
-			plainText.setBuffer(preds);
-			eval.evaluateModel(obj,structure,plainText);
-			try
-			{
-				String path = "/root/metrics/Training";
-				PrintWriter writer=new PrintWriter(new BufferedWriter(new FileWriter(path,true)));
-				writer.println("writing");
-				writer.println("*******************************");
-				for (Prediction i: eval.predictions())
-				{
-					writer.println(i.actual() + "," + i.predicted());
-				}
-			}
-			catch (Exception e)
-			{
-				logger.debug("Couldn't write to file",e);
-			}
-					
-
-			logger.debug("Finished building");
+		if (started==true)
+			return;
+		started=true;
+		sem.acquire();
+		structure.setClassIndex(structure.numAttributes() - 1);
+		obj = new REPTree();
+		//obj.buildClassifier(train);
+		obj.buildClassifier(structure);
+		//we check this tree out in a file
+		try
+		{
+			String path = "/root/metrics/Trees";
+			PrintWriter writer=new PrintWriter(new BufferedWriter(new FileWriter(path,true)));
+			writer.println(structure);
+			writer.println("*******************************");
+			writer.println(obj);
+			writer.println("*******************************");
+			writer.println("*******************************");
+			writer.close();
 		}
 		catch(Exception e)
 		{
-			logger.debug("Some screwall ", e);
+			logger.debug("Couldn't write to file");
 		}
+		System.out.println(obj);
+		System.out.println(" *******************************");
+		Evaluation eval = new Evaluation(structure);
+		StringBuffer preds = new StringBuffer();
+		PlainText plainText = new PlainText();
+		plainText.setHeader(structure);
+		plainText.setBuffer(preds);
+		eval.evaluateModel(obj,structure,plainText);
+		this.built=true;
+		sem.release();
+		}
+		catch(Exception e)
+		{}
 		//System.out.println(preds.toString());
 	}		
 	/*	System.out.println(" *******************************");
@@ -153,13 +124,16 @@ public class TestREPTree
 		unitTest();*/
 	
 	/** This function only tests for a single unit or row */
-	public double unitTest(ArrayList<Double> row) throws Exception
+	public double unitTest(ArrayList<Double> row)
 	{
+		try
+		{
 		logger.debug("Unit testing");
 		Instances struct = initInstance();
-		DataSet set = new DataSet(row.size());
+		DataSet set = new DataSet();
 		set.init(row);
 		struct.add(new DenseInstance(1.0,set.row));
+		System.out.println(struct);
 		StringBuffer preds = new StringBuffer();
 		PlainText plainText = new PlainText();
 		plainText.setHeader(struct);
@@ -173,6 +147,11 @@ public class TestREPTree
 		System.out.println(eval.predictions().get(0).actual());
 		System.out.println(eval.predictions().get(0).predicted());*/
 		return eval.predictions().get(0).predicted();
+		}
+		catch (Exception e)
+		{
+			return -1;
+		}
 				
 	}		
 
@@ -180,19 +159,10 @@ public class TestREPTree
 	{	
 		// we add to the instance 
 		//logger.debug("in addToDataset, row is " + row + " structure " + structure);
-		DataSet set;
-		/*if (this.name=="ReadStage")
-			set = new DataSet(29);
-		else*/
-			set = new DataSet(30);
+		DataSet set = new DataSet();
 		boolean success= set.init(row);
 		if (success)
-		{
-			logger.debug("success success success");
 			structure.add(new DenseInstance(1.0,set.row));
-		}
-		else
-			logger.debug("fail fail fail");
 		//checks if size of dataset is above 'n', calls buildTree
 		checkSize();
 		logger.debug("Added successfully, size is " + this.structure.size());
@@ -203,10 +173,8 @@ public class TestREPTree
 	{
 		try
 		{
-		if (!built && this.structure.size()>MAX_SIZE)
+		if (!built && this.structure.size()>MAX_SIZE )
 				buildTree();
-		else
-				logger.debug("Tree is still too small " + MAX_SIZE + " current size " + this.structure.size() + " built " + built);
 		}
 		catch(Exception e)
 		{
@@ -223,3 +191,4 @@ public class TestREPTree
 
 
 }
+

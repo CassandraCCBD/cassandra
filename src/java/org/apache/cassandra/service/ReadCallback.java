@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.ArrayList;
+import java.io.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -47,6 +49,7 @@ import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.concurrent.SimpleCondition;
 //Cassandra Team mod
 import org.apache.cassandra.modeling.*;
+import org.apache.cassandra.ml.*;
 
 public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 {
@@ -110,24 +113,82 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
         }
     }
 
+    public void doDT(QueueLengthBuffer buff, long startTime)
+    {
+			ArrayList<Double> row= null;
+			double expectedRT;
+			long total_t;
+			double temp;
+			total_t = (System.nanoTime()-startTime);
+			temp = (double) total_t;
+			buff.setResponseTime(total_t, -1);
+			// we now do the REP stuff
+			try
+			{
+				row = buff.toArrayList();
+				if (AllTrees.Readstage.treeAvailable())
+				{
+					// we can test 
+					// we hardcode the RT to 0 since we anyway don't use it
+					logger.debug("testing things now");
+					row.add(0.0);
+					expectedRT = AllTrees.Readstage.unitTest(row);
+					try
+					{
+						String path = "/root/metrics/NonLocalDT";
+						PrintWriter writer=new PrintWriter(new BufferedWriter(new FileWriter(path,true)));
+						writer.println(total_t + "," + (long)expectedRT);
+						writer.close();
+					}
+					catch (Exception e)
+					{
+						logger.debug("Couldn't write to NonLocalDT");
+					}
+					//tree = true;
+					//if expectedRT > 10000000000 then it is a failure 
+					if (expectedRT > 10000000000l)
+					{
+						// we increment the number of failures
+						Failures.decisionTreeFailures.incrementAndGet();
+					}
+					else
+					{
+						// we predict that it is a success
+						Failures.totalSuccess.incrementAndGet();
+					}
+				}
+				else
+				{
+					//we cannot test, we add to the dataset 
+					row.add(temp);
+					logger.debug("adding to the tree" + row);
+					AllTrees.Readstage.addToDataset(row);
+				}
+			}
+			catch(Exception e)
+			{
+				logger.debug("Exception testing in non-local reads", e);
+			}
+			buff.dumpToFile("/root/metrics/NonLocalReadSuccess");
+	}
+
     public void awaitResults() throws ReadFailureException, ReadTimeoutException
     {
     	long startTime, endTime;
-	startTime = System.nanoTime();
-	// we get the current system state parameters as well
-	QueueLengthBuffer buff = new QueueLengthBuffer();
-	buff = QueueLengths.foregroundActivity(buff);
-	int limits = 0;
-	buff.getParams(-1,limits);
-	buff.addItem("endpoint", this.endpoints.toString());
+		startTime = System.nanoTime();
+		// we get the current system state parameters as well
+		QueueLengthBuffer buff = new QueueLengthBuffer();
+		buff = QueueLengths.foregroundActivity(buff);
+		int limits = 0;
+		buff.getParams(-1,limits);
+		buff.addItem("endpoint", this.endpoints.toString());
         boolean signaled = await(command.getTimeout(), TimeUnit.MILLISECONDS);
         boolean failed = blockfor + failures > endpoints.size();
-        if (signaled && !failed)
-	{
-		buff.setResponseTime(System.nanoTime()-startTime, -1);
-		buff.dumpToFile("/root/metrics/NonLocalReadSuccess");
-		return;
-	}
+		if (signaled && !failed)
+		{
+			doDT(buff, startTime);
+			return;
+		}
 
         if (Tracing.isTracing())
         {
@@ -139,7 +200,10 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
             String gotData = received > 0 ? (resolver.isDataPresent() ? " (including data)" : " (only digests)") : "";
             logger.debug("{}; received {} of {} responses{}", new Object[]{ (failed ? "Failed" : "Timed out"), received, blockfor, gotData });
         }
-
+		// before we throw some failure, we do some decision tree stuff
+		// we don't do it cuz Cassandra sucks and drops messages, all dropped
+		// messages have the same response time -_-
+		//doDT(buff, startTime);
         // Same as for writes, see AbstractWriteResponseHandler
         throw failed
             ? new ReadFailureException(consistencyLevel, received, failures, blockfor, resolver.isDataPresent())
