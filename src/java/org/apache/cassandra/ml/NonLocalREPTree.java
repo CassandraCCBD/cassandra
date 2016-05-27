@@ -130,7 +130,7 @@ public class NonLocalREPTree implements REPInterface
 		{
 		logger.debug("Unit testing");
 		Instances struct = initInstance();
-		DataSet set = new DataSet();
+		DataSet set = new DataSet(row.size());
 		set.init(row);
 		struct.add(new DenseInstance(1.0,set.row));
 		System.out.println(struct);
@@ -159,7 +159,7 @@ public class NonLocalREPTree implements REPInterface
 	{	
 		// we add to the instance 
 		//logger.debug("in addToDataset, row is " + row + " structure " + structure);
-		DataSet set = new DataSet();
+		DataSet set = new DataSet(row.size());
 		boolean success= set.init(row);
 		if (success)
 			structure.add(new DenseInstance(1.0,set.row));
