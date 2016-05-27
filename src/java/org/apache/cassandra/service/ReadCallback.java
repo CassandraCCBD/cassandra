@@ -125,14 +125,15 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 			// we now do the REP stuff
 			try
 			{
+				int index = Failures.numCores;
 				row = buff.toArrayList();
-				if (AllTrees.Readstage.treeAvailable())
+				if (AllTrees.NonLocalReads[index].treeAvailable())
 				{
 					// we can test 
 					// we hardcode the RT to 0 since we anyway don't use it
 					logger.debug("testing things now");
 					row.add(0.0);
-					expectedRT = AllTrees.Readstage.unitTest(row);
+					expectedRT = AllTrees.NonLocalReads[index].unitTest(row);
 					try
 					{
 						String path = "/root/metrics/NonLocalDT";
@@ -146,15 +147,17 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 					}
 					//tree = true;
 					//if expectedRT > 10000000000 then it is a failure 
-					if (expectedRT > 10000000000l)
+					if (expectedRT > 6000000000l)
 					{
 						// we increment the number of failures
-						Failures.decisionTreeFailures.incrementAndGet();
+						// this could cause some upscaling to be done by the monitoring thread
+						Failures.decisionTreeDanger.incrementAndGet();
 					}
-					else
+					else if (expectedRT < 4000000000l)
 					{
 						// we predict that it is a success
-						Failures.totalSuccess.incrementAndGet();
+						// this could cause some downscaling
+						Failures.decisionTreeSafe.incrementAndGet();
 					}
 				}
 				else
@@ -162,7 +165,7 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 					//we cannot test, we add to the dataset 
 					row.add(temp);
 					logger.debug("adding to the tree" + row);
-					AllTrees.Readstage.addToDataset(row);
+					AllTrees.NonLocalReads[index].addToDataset(row);
 				}
 			}
 			catch(Exception e)

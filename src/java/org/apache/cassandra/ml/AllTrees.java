@@ -20,10 +20,22 @@ import java.io.File;
  */
 public class AllTrees
 {
-	public static TestREPTree Readstage = new TestREPTree(10000, "ReadStage");
-	public static TestREPTree NonLocalReads = new TestREPTree(100000, "NonLocalRead");
-	public static TestREPTree LocalMutations = new TestREPTree(29, " ");
-	public static TestREPTree NonLocalMutations = new TestREPTree(30, " ");
+	public static TestREPTree Readstage[];
+	public static TestREPTree NonLocalReads[];
+	public static TestREPTree LocalMutations[];
+	public static TestREPTree NonLocalMutations[];
+
+	static 
+	{
+		Readstage = new TestREPTree[4];
+		NonLocalReads = new TestREPTree[4];
+		for (int i=0;i<4;i++)
+		{
+			//instantiating each 
+			Readstage[i] = new TestREPTree(10000, "ReadStage");
+			NonLocalReads[i] = new TestREPTree(10000, "NonLocalReads");
+		}
+	}
 
 }
 

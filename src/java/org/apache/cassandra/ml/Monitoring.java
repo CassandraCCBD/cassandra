@@ -68,9 +68,9 @@ public class Monitoring implements Runnable
 	
 	public String getmoreCores()
 	{
-		if ((numcores++)==1)
+		if ((numcores++)==0)
 			return "0-1";
-		else if ((numcores++)==2)
+		else if ((numcores++)==1)
 			return "0-2";
 		else 
 		{
@@ -81,9 +81,9 @@ public class Monitoring implements Runnable
 
 	public String getlessCores()
 	{
-		if ((numcores--)==3)
+		if ((numcores--)==2)
 			return "0-1";
-		else if ((numcores--)==4)
+		else if ((numcores--)==3)
 			return "0-2";
 		else 
 		{

@@ -389,7 +389,7 @@ public class CassandraDaemon
         nativeTransportService = new NativeTransportService();
 	
 		//ML - Monitoring thread
-		//StageManager.getStage(Stage.ML).execute(new Monitoring());
+		StageManager.getStage(Stage.ML).execute(new Monitoring());
         completeSetup();
     }
 

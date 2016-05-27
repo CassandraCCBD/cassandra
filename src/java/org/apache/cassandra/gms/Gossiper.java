@@ -634,7 +634,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
     private boolean sendGossip(MessageOut<GossipDigestSyn> message, Set<InetAddress> epSet)
     {
         List<InetAddress> liveEndpoints = ImmutableList.copyOf(epSet);
-        
+       	try{ throw new RuntimeException();}catch(Exception e){ logger.debug(" SENDGOSSIP {}",e);} 
         int size = liveEndpoints.size();
         if (size < 1)
             return false;

@@ -1704,16 +1704,16 @@ public class StorageProxy implements StorageProxyMBean
         void doInitialQueries()
         {
             executor.executeAsync();
-
-        /*    for (InetAddress endpoint : executor.handler.endpoints)
+			EchoMessage echo = new EchoMessage(10);
+            for (InetAddress endpoint : executor.handler.endpoints)
             {
 				logger.debug(" MSG sending ");
 
-     			MessageOut<EchoMessage> message = new MessageOut<EchoMessage>(MessagingService.Verb.ECHO,null,EchoMessage.serializer);
+     			MessageOut<EchoMessage> message = new MessageOut<EchoMessage>(MessagingService.Verb.ECHO,echo,EchoMessage.serializer);
 				logger.debug(" MESSAGE "+message);
             	MessagingService.instance().sendOneWay(message, endpoint);
 				logger.debug("MSG sent ");
-            }*/
+            }
         }
 
         void maybeTryAdditionalReplicas()
@@ -1829,12 +1829,12 @@ public class StorageProxy implements StorageProxyMBean
 				try
 				{
 					row = buff.toArrayList();
-					if (AllTrees.Readstage.treeAvailable())
+					if (AllTrees.Readstage[Failures.numCores].treeAvailable())
 					{
 						// we can test 
 						// we hardcode the RT to 0 since we anyway don't use it
 						row.add(0.0);
-						expectedRT = AllTrees.Readstage.unitTest(row);
+						expectedRT = AllTrees.Readstage[Failures.numCores].unitTest(row);
 						tree = true;
 					}
 				}
@@ -1871,7 +1871,7 @@ public class StorageProxy implements StorageProxyMBean
 						if (!tree)
 						{
 							row.add((Double)total_t);
-							AllTrees.Readstage.addToDataset(row);
+							AllTrees.Readstage[Failures.numCores].addToDataset(row);
 
 						}
 						else

@@ -9,12 +9,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Failures
 {
+	// This guy cares about upscaling 
 	public static AtomicInteger decisionTreeDanger = new AtomicInteger(0);
+	// This guy cares about downscaling 
 	public static AtomicInteger decisionTreeSafe = new AtomicInteger(0);
 	//public static AtomicInteger actualFailures = new AtomicInteger(0);
 	public static AtomicInteger totalSuccess = new AtomicInteger(0);
 	public static AtomicInteger totalQueries = new AtomicInteger(0);
-	//TODO- figure out something to downscale as well
+	public static int numCores=3;
 }
 
 
